@@ -1,0 +1,33 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="flash-message flash-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<h2>ফলাফল</h2>
+{% if results %}
+    {% for result in results %}
+    <div class="result-item">
+        <span>
+            {% if result.file_number %}
+                ফাইল {{ result.file_number }} ({{ result.filename }}):
+            {% else %}
+                ফাইল ({{ result.filename }}):
+            {% endif %}
+        </span>
+        <span class="status-{% if result.status == 'সফল (Success)' %}success{% else %}failed{% endif %}"> {{ result.status }} </span>
+        <span> - {{ result.message }} </span>
+        {% if result.link %}
+        <div class="link-container">
+            <span class="link-text" id="link-{{ result.file_number if result.file_number else result.filename|replace('.', '-')|replace(' ', '-') }}">{{ result.link }}</span>
+             <button class="copy-button" onclick="copyToClipboard('link-{{ result.file_number if result.file_number else result.filename|replace('.', '-')|replace(' ', '-') }}', this)">কপি</button>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+ {% else %}
+    <p style="text-align:center;">কোনো ফলাফল নেই।</p>
+ {% endif %}
+ 
