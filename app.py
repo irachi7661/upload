@@ -13,10 +13,10 @@ app = Flask(__name__)
 app.secret_key = 'your_very_secret_key_change_it' # একটি ভিন্ন সিক্রেট কী দিন
 
 # --- Dropbox Configuration ---
-DROPBOX_ACCESS_TOKEN = os.environ.get("DROPBOX_ACCESS_TOKEN", "YOUR_DROPBOX_ACCESS_TOKEN_FALLBACK") # পরিবেশ ভেরিয়েবল থেকে টোকেন নিন
+DROPBOX_ACCESS_TOKEN = os.environ.get("DROPBOX_ACCESS_TOKEN", "sl.u.AFqPRrNxm7Gm1R_S--vEUVSkYMidXL-kWuA4A_cgtaqSpyKgY6ofuY6VSRERhfS3i8zMEOryx45XxLhRCXyYz_NJdwxyDZqZvgFowiKOoZ5VPZprkelIT6kL5PtcBMCqZ2b6hgZavQ56Ah0SwXNrm1IcLRYgH4LQY3g_tVMopqUcHXf1I3BrTcJwVi1SpjWePG2SW0cwN4b0zgWiG7QU6M3BbK-T1L9iosm1GU34RF7IOo1i9h446Fpr5ncSo4qqczUgHpTYB7ccDYhsyPidNK1ipWaiXkSwl4_qTniABrkU4ldK2KUNFT6QjUdO3VaTEGica408TcejC7ehH-6Q8R9a4usIMNvDLwOSRVjHwGRvHxKdphL0yEwxRY2sUMBN4X2bt4Z9FiEz_ob0uE8vdyYAWnb290LpvnJSvixeKa6TqbaDdlpoDHxm6YfQbDok9fsBbf-TRsWMvOuocdnTG5nLL_hj-URQtMPFcO0kWhUWWe6VL4xcNQ3GKCXmUkrWy9dhMtH12Hj6ZGrLvfgNDyVNYybict7jnHYOALKM9eyOgo8L87Xx2Sk6Oyrsgkrdb-t9wHWdZJw4NVeBxMQ2qDdAoIsaz31IU2NkqMK5S-h5hlLawbtrYITd_iAf0FVvbeXaqlcqeIJ4Qk5ZzedSg3fjGJOTH2rZ0M4HO_1IndNcqBp2kB3I9QIDknrC2eolhrKpiR0dh0loEm3CVMI2V74UihZ8c37nJx49khzWdL2at11M5biOiBoNXhpzwqEyovFQWqhqVZHud2lTk5P1R_9i6jFx-qNB-WehWp_33o50k9NTVnLe4fqsVjeJ-gy7LPZ7AS0mq9UKa3411G5-ilV7w6T3JpCcJeVSc_SSuVk8vFpNt3KE4bkbnC2_r6HkAn6zsFigNexPlzb1mUeQCTW_Dv0bdU29-z05gPWEn1lQaEEtyb5lB9oKQiNVs2-ZPlDKHuis0BRN7mW7dfhiyrTKhwaVDvumIsaabSJFk_MxMxLF7rO_HuPdlMoegV1EFzEUomsmxG1xGp0B1HsOLMNUJ8L2XxSj-Tt33OFroT42NBMkVyjThMxJM__IXEt6W1BFuNfKRLCqE8ZP7dDRPwo3tJ5_P4ekG85sV627kPAzTOBzbuaK8KejZuSbFtVYu8gATVOT0vjKZTiCCAIdr30xKwHNivl6kvWD8kQKN5ifPgvZ3SPdVzrUrPJLvKUVGn8fseVW7MPTTupFm0VldHroyUrwzLJGa73qZDip0iVys78Lnp8EXkv0JmQFdQKAk2HqELSTCJnsKSS3GEudg5msBFsgvexUhSbCe9W5S3Ft2CqyZlDMQL6qCek6VTHQEEFuqNMCpyL1UdP766pKFSBNNrUJm-vpQQyROdHNy78LmAkDnEP8A3AVGo8nBYGJ7UVLJflEClEBn1oJlibqmWjj6XA7g6lxBSLB8fiGLMVIFOq7c_HTJ0brqiopO5hY0XA") # পরিবেশ ভেরিয়েবল থেকে টোকেন নিন
 
 # --- Base URL (শুধুমাত্র UID মোডের জন্য) ---
-BASE_URL_UID_MODE = "https://mywebsite.com"
+BASE_URL_UID_MODE = "https://vigilant-fishstick-2fuv.onrender.com/"
 
 # --- Temporary File Directory ---
 TEMP_DIR = "temp_files"
