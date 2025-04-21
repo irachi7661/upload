@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ভিডিও ডাউনলোডার ও ড্রপবক্স আপলোডার</title>
+    <title>ভিডিও ডাউনলোডার ও ড্রপবক্স আপলোডার (Real-time Status)</title>
     <style>
         /* আগের CSS কোড এখানে থাকবে */
-        body { font-family: sans-serif; line-height: 1.6; margin: 20px; background-color: #f4f4f4; }
+         body { font-family: sans-serif; line-height: 1.6; margin: 20px; background-color: #f4f4f4; }
         .container { max-width: 800px; margin: auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         h1, h2 { color: #333; text-align: center; margin-bottom: 20px; }
         .form-group { margin-bottom: 15px; }
@@ -17,44 +17,59 @@
         button[type="submit"] { display: block; width: 100%; padding: 12px; background-color: #5cb85c; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; transition: background-color 0.3s ease; }
         button[type="submit"]:hover { background-color: #4cae4c; }
         button:disabled { background-color: #cccccc; cursor: not-allowed; }
-        .results-container { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; min-height: 50px; /* Prevents layout shift */ }
-        #processing-indicator { display: none; text-align: center; padding: 10px; margin-top: 15px; font-style: italic; color: #555; }
-        .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #09f; margin: 10px auto; animation: spin 1s ease infinite; }
+        .results-container { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; min-height: 50px; }
+        #processing-indicator { display: none; /* এখন শুধু স্পিনার না, স্ট্যাটাস ও দেখাবে */ text-align: center; padding: 10px; margin-top: 15px; font-style: italic; color: #555; border: 1px dashed #ccc; background-color: #f9f9f9;}
+        .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 24px; height: 24px; border-radius: 50%; border-left-color: #09f; margin: 0 auto 5px auto; animation: spin 1s ease infinite; display: inline-block; vertical-align: middle; margin-right: 10px;}
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #status-updates { font-weight: bold; display: inline-block; vertical-align: middle; }
+        .error-message { color: red; font-size: 0.9em; margin-top: 10px; text-align: center; padding: 10px; border: 1px solid red; background-color: #fdd; border-radius: 4px; }
+        /* Result items styling from _results.html (if needed directly) */
+        .result-item { background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .result-item span { margin-right: 10px; word-break: break-all; }
+        .status-success { color: green; font-weight: bold; }
+        .status-failed { color: red; font-weight: bold; }
+        .copy-button { padding: 5px 10px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 12px; margin-left: 10px; white-space: nowrap; }
+        .copy-button:hover { background-color: #0056b3; }
+        .link-container { display: flex; align-items: center; flex-grow: 1; min-width: 200px; margin-top: 5px; }
+        .link-text { flex-grow: 1; margin-right: 5px; overflow-wrap: break-word; }
+        .flash-message { padding: 15px; margin-bottom: 20px; border-radius: 4px; text-align: center; }
+        .flash-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .flash-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .flash-warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
 
-        /* Input Mode Specific Groups - Initially hide link and merge */
-        #direct-link-group, #merge-group { display: none; }
-        .radio-group label { display: inline-block; margin-right: 10px; font-weight: normal; }
-        .error-message { color: red; font-size: 0.9em; margin-top: 10px; text-align: center; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>ভিডিও ডাউনলোডার ও ড্রপবক্স আপলোডার</h1>
+        <h1>ভিডিও ডাউনলোডার ও ড্রপবক্স আপলোডার (Real-time Status)</h1>
 
-        <div id="ajax-error-message" class="error-message"></div>
+        <div id="global-error-message" class="error-message" style="display: none;"></div>
+        <div id="flash-message-area">
+             {% with messages = get_flashed_messages(with_categories=true) %}
+               {% if messages %}
+                 {% for category, message in messages %}
+                   <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                 {% endfor %}
+               {% endif %}
+             {% endwith %}
+        </div>
 
-        <form method="POST" id="download-form">
-            <div class="form-group radio-group">
-                <strong>ইনপুট মোড নির্বাচন করুন:</strong><br>
-                <input type="radio" id="mode_uid" name="input_mode" value="uid" checked onchange="toggleInputMode()">
-                <label for="mode_uid">UID</label>
-                <input type="radio" id="mode_link" name="input_mode" value="link" onchange="toggleInputMode()">
-                <label for="mode_link">সরাসরি লিঙ্ক</label>
-                <input type="radio" id="mode_merge" name="input_mode" value="merge" onchange="toggleInputMode()">
-                <label for="mode_merge">ভিডিও+অডিও মার্জ</label>
+
+        <form method="POST" action="#" id="download-form"> <div class="form-group radio-group">
+                 <strong>ইনপুট মোড:</strong>
+                <input type="radio" id="mode_uid" name="input_mode" value="uid" checked onchange="toggleInputMode()"> <label for="mode_uid">UID</label>
+                <input type="radio" id="mode_link" name="input_mode" value="link" onchange="toggleInputMode()"> <label for="mode_link">সরাসরি লিঙ্ক</label>
+                <input type="radio" id="mode_merge" name="input_mode" value="merge" onchange="toggleInputMode()"> <label for="mode_merge">ভিডিও+অডিও মার্জ</label>
             </div>
 
-            <div id="uid-group">
+             <div id="uid-group">
                 <div class="form-group"> <label for="uid">UID:</label> <input type="text" id="uid" name="uid"> </div>
                 <div class="form-group"> <label for="number">ফাইলের সংখ্যা:</label> <input type="number" id="number" name="number" min="1"> </div>
             </div>
-
             <div id="direct-link-group">
                 <div class="form-group"> <label for="direct_link">ভিডিওর সরাসরি লিঙ্ক:</label> <input type="url" id="direct_link" name="direct_link" placeholder="https://..."> </div>
             </div>
-
-            <div id="merge-group">
+             <div id="merge-group">
                 <div class="form-group"> <label for="video_link">ভিডিও লিঙ্ক (অডিও ছাড়া):</label> <input type="url" id="video_link" name="video_link" placeholder="https://..."> </div>
                 <div class="form-group"> <label for="audio_link">অডিও লিঙ্ক:</label> <input type="url" id="audio_link" name="audio_link" placeholder="https://..."> </div>
             </div>
@@ -63,16 +78,21 @@
             <div class="form-group"> <label for="folder_1_name">প্রথম ফোল্ডারের নাম:</label> <input type="text" id="folder_1_name" name="folder_1_name" required> </div>
             <div class="form-group"> <label for="folder_2_name">দ্বিতীয় ফোল্ডারের নাম:</label> <input type="text" id="folder_2_name" name="folder_2_name" required> </div>
 
+
             <button type="submit" id="submit-button">প্রসেস শুরু করুন</button>
         </form>
 
-        <div id="processing-indicator"> <p>প্রসেসিং চলছে...</p> <div class="spinner"></div> </div>
+        <div id="processing-indicator">
+            <div class="spinner"></div>
+            <span id="status-updates">Awaiting task start...</span>
+        </div>
 
         <div id="results-container" class="results-container">
-            </div>
+             </div>
     </div>
 
     <script>
+        // --- toggleInputMode function (as before) ---
         function toggleInputMode() {
             const mode = document.querySelector('input[name="input_mode"]:checked').value;
             const uidGroup = document.getElementById('uid-group');
@@ -84,108 +104,166 @@
             const videoLinkInput = document.getElementById('video_link');
             const audioLinkInput = document.getElementById('audio_link');
 
-            // Hide all mode-specific groups initially
-            uidGroup.style.display = 'none';
-            linkGroup.style.display = 'none';
-            mergeGroup.style.display = 'none';
+            uidGroup.style.display = 'none'; linkGroup.style.display = 'none'; mergeGroup.style.display = 'none';
+            uidInput.required = false; numberInput.required = false; linkInput.required = false; videoLinkInput.required = false; audioLinkInput.required = false;
 
-            // Disable requirements for all optional fields
-            uidInput.required = false;
-            numberInput.required = false;
-            linkInput.required = false;
-            videoLinkInput.required = false;
-            audioLinkInput.required = false;
+            if (mode === 'uid') { uidGroup.style.display = 'block'; uidInput.required = true; numberInput.required = true; }
+            else if (mode === 'link') { linkGroup.style.display = 'block'; linkInput.required = true; }
+            else if (mode === 'merge') { mergeGroup.style.display = 'block'; videoLinkInput.required = true; audioLinkInput.required = true; }
+        }
 
-            // Show the selected group and set requirements
-            if (mode === 'uid') {
-                uidGroup.style.display = 'block';
-                uidInput.required = true;
-                numberInput.required = true;
-            } else if (mode === 'link') {
-                linkGroup.style.display = 'block';
-                linkInput.required = true;
-            } else if (mode === 'merge') {
-                mergeGroup.style.display = 'block';
-                videoLinkInput.required = true;
-                audioLinkInput.required = true;
+        // --- copyToClipboard function (as before, needs careful handling with dynamic content) ---
+         function copyToClipboard(elementId, button) {
+            const targetElement = document.getElementById(elementId);
+            if (!targetElement) { console.error("Element not found for copy:", elementId); return; }
+            const linkText = targetElement.innerText;
+            navigator.clipboard.writeText(linkText).then(() => {
+                const originalText = button.innerText; button.innerText = 'কপি হয়েছে!'; button.disabled = true;
+                setTimeout(() => { button.innerText = originalText; button.disabled = false; }, 2000);
+            }).catch(err => { console.error('Copy failed: ', err); alert('লিঙ্ক কপি করতে সমস্যা হয়েছে।'); });
+        }
+
+        // --- Function to Render Final Results ---
+        function renderResults(resultsData) {
+            const container = document.getElementById('results-container');
+            if (!resultsData || resultsData.length === 0) {
+                 container.innerHTML = '<h2>ফলাফল</h2><p style="text-align:center;">কোনো ফলাফল পাওয়া যায়নি।</p>';
+                 return;
             }
+
+             let html = '<h2>ফলাফল</h2>';
+             resultsData.forEach(result => {
+                 // Generate unique ID for link element
+                 const uniqueIdSuffix = result.file_number ? result.file_number : (result.filename ? result.filename.replace(/[^a-zA-Z0-9]/g, '-') : Math.random().toString(36).substring(7));
+                 const linkId = `link-${uniqueIdSuffix}`;
+                 const statusClass = result.status === 'সফল (Success)' ? 'status-success' : 'status-failed';
+
+                 html += `
+                    <div class="result-item">
+                        <span>
+                            ${result.file_number ? `ফাইল ${result.file_number} (${result.filename})` : `ফাইল (${result.filename})`}:
+                        </span>
+                        <span class="${statusClass}">${result.status}</span>
+                        <span> - ${result.message || ''}</span>
+                        ${result.link ? `
+                        <div class="link-container">
+                            <span class="link-text" id="${linkId}">${result.link}</span>
+                            <button class="copy-button" onclick="copyToClipboard('${linkId}', this)">কপি</button>
+                        </div>` : ''}
+                    </div>
+                 `;
+             });
+             container.innerHTML = html;
+              // Scroll to results
+             container.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            toggleInputMode(); // Set initial state
+            toggleInputMode(); // Set initial UI state
 
             const form = document.getElementById('download-form');
             const submitButton = document.getElementById('submit-button');
             const processingIndicator = document.getElementById('processing-indicator');
+            const statusUpdates = document.getElementById('status-updates');
             const resultsContainer = document.getElementById('results-container');
-            const ajaxErrorMessage = document.getElementById('ajax-error-message');
+            const globalErrorMessage = document.getElementById('global-error-message');
+            const flashMessageArea = document.getElementById('flash-message-area'); // Area for initial flash messages
+
+            let eventSource = null; // Variable to hold the EventSource object
 
             form.addEventListener('submit', function(event) {
-                event.preventDefault(); // Prevent default form submission
-                ajaxErrorMessage.textContent = ''; // Clear previous errors
+                event.preventDefault();
+                globalErrorMessage.style.display = 'none'; // Hide previous global errors
+                globalErrorMessage.textContent = '';
                 resultsContainer.innerHTML = ''; // Clear previous results
-                processingIndicator.style.display = 'block'; // Show spinner
+                flashMessageArea.innerHTML = ''; // Clear initial flash messages
+                statusUpdates.textContent = 'টাস্ক শুরু হচ্ছে...';
+                processingIndicator.style.display = 'block';
                 submitButton.disabled = true;
                 submitButton.textContent = 'প্রসেসিং চলছে...';
 
+                 // Close previous EventSource if exists
+                 if (eventSource) {
+                    eventSource.close();
+                 }
+
                 const formData = new FormData(form);
 
-                fetch('/', { // Send request to the same URL
+                // Step 1: Send POST request to initiate the task
+                fetch('/start-task', { // Use a dedicated endpoint to start
                     method: 'POST',
                     body: formData
                 })
                 .then(response => {
                     if (!response.ok) {
-                        // Try to get error message from response body if possible
-                        return response.text().then(text => {
-                           throw new Error(`সার্ভার এরর: ${response.status} ${response.statusText}. ${text}`);
-                        });
+                        // Handle immediate errors from starting the task (e.g., validation)
+                         return response.json().then(errData => {
+                             throw new Error(errData.error || `সার্ভার এরর: ${response.status}`);
+                         });
                     }
-                    return response.text(); // Get response as HTML text
+                    return response.json(); // Expecting { "task_id": "..." }
                 })
-                .then(html => {
-                    resultsContainer.innerHTML = html; // Update results area
-                    // Re-enable copy button functionality if needed (or use event delegation)
+                .then(data => {
+                    if (data.task_id) {
+                        // Step 2: Connect to SSE for status updates
+                        console.log("Connecting to SSE for task_id:", data.task_id);
+                        eventSource = new EventSource('/status/' + data.task_id);
+
+                        eventSource.onmessage = function(event) {
+                            console.log("SSE Message:", event.data);
+                            try {
+                                const statusData = JSON.parse(event.data);
+                                // Update status message UI
+                                statusUpdates.textContent = statusData.status || 'আপডেট পাওয়া যাচ্ছে...';
+
+                                if (statusData.done) {
+                                    eventSource.close();
+                                    processingIndicator.style.display = 'none';
+                                    submitButton.disabled = false;
+                                    submitButton.textContent = 'প্রসেস শুরু করুন';
+
+                                    if (statusData.error) {
+                                         globalErrorMessage.textContent = `ত্রুটি: ${statusData.error}`;
+                                         globalErrorMessage.style.display = 'block';
+                                         resultsContainer.innerHTML = '<p style="color:red; text-align:center;">কাজটি ত্রুটির কারণে সম্পন্ন হয়নি।</p>';
+                                    } else if (statusData.results) {
+                                        renderResults(statusData.results); // Render final results
+                                    } else {
+                                         resultsContainer.innerHTML = '<p style="text-align:center;">কাজটি সম্পন্ন হয়েছে কিন্তু কোনো ফলাফল পাওয়া যায়নি।</p>';
+                                    }
+                                }
+                             } catch (e) {
+                                 console.error("Error parsing SSE data:", e);
+                                 statusUpdates.textContent = "স্ট্যাটাস ডেটা পার্স করতে সমস্যা হয়েছে।";
+                             }
+                        };
+
+                        eventSource.onerror = function(error) {
+                            console.error("EventSource failed:", error);
+                            statusUpdates.textContent = "স্ট্যাটাস আপডেটের সংযোগ বিচ্ছিন্ন হয়েছে।";
+                            globalErrorMessage.textContent = "সার্ভারের সাথে সংযোগ বিচ্ছিন্ন। অনুগ্রহ করে আবার চেষ্টা করুন।";
+                             globalErrorMessage.style.display = 'block';
+                            processingIndicator.style.display = 'none';
+                            submitButton.disabled = false;
+                            submitButton.textContent = 'প্রসেস শুরু করুন';
+                            eventSource.close();
+                        };
+
+                    } else {
+                         throw new Error("সার্ভার থেকে টাস্ক আইডি পাওয়া যায়নি।");
+                    }
                 })
                 .catch(error => {
-                    console.error('AJAX Error:', error);
-                    ajaxErrorMessage.textContent = `একটি ত্রুটি ঘটেছে: ${error.message}`;
-                    resultsContainer.innerHTML = '<p style="color:red; text-align:center;">ফলাফল লোড করা যায়নি।</p>';
-                })
-                .finally(() => {
-                    processingIndicator.style.display = 'none'; // Hide spinner
+                    console.error('Error starting task or connecting to SSE:', error);
+                    globalErrorMessage.textContent = `একটি ত্রুটি ঘটেছে: ${error.message}`;
+                    globalErrorMessage.style.display = 'block';
+                    processingIndicator.style.display = 'none';
                     submitButton.disabled = false;
-                    submitButton.textContent = 'প্রসেস শুরু করুন';
-                     // Scroll to results
-                    resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                     submitButton.textContent = 'প্রসেস শুরু করুন';
                 });
             });
         });
-
-        // Note: copyToClipboard function needs to be available or re-attached
-        // if results are dynamically loaded. Using event delegation on resultsContainer
-        // is a more robust approach. For simplicity, we keep the old function.
-        // If copy doesn't work, this needs adjustment.
-        function copyToClipboard(elementId, button) {
-            const linkText = document.getElementById(elementId)?.innerText; // Add null check
-            if (!linkText) {
-                console.error("Could not find element with ID:", elementId);
-                return;
-            }
-            navigator.clipboard.writeText(linkText).then(() => {
-                const originalText = button.innerText;
-                button.innerText = 'কপি হয়েছে!';
-                button.disabled = true;
-                setTimeout(() => {
-                    button.innerText = originalText;
-                     button.disabled = false;
-                }, 2000);
-            }).catch(err => {
-                console.error('Failed to copy text: ', err);
-                alert('লিঙ্ক কপি করতে সমস্যা হয়েছে।');
-            });
-        }
-
     </script>
 </body>
 </html>
+
